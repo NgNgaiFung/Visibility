@@ -1,0 +1,30 @@
+import torch
+import torchvision.transforms as transforms
+from PIL import Image
+import matplotlib.pyplot as plt
+
+# get the image
+img = Image.open("averaged_gray_level.jpg")
+
+# conert the image to tensor
+img_tensor = transforms.ToTensor()(img)
+
+# flatten the image
+img_tensor = img_tensor.view(-1)
+
+# get the histogram
+print(img_tensor)
+histogram = torch.histc(img_tensor, bins=256, min=0, max=1)
+print(histogram)
+
+# plot the histogram
+bins = 256
+x = range(bins) 
+plt.style.use('ggplot')
+plt.bar(x, histogram) 
+plt.title("Gray Level Histogram")
+plt.xlabel("Gray Level")
+plt.ylabel("Frequency")
+plt.grid(True)
+plt.savefig("histogram.png", dpi=300)
+plt.show()
