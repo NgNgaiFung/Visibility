@@ -43,19 +43,29 @@ excel_file = "data.xlsx"
 image_folder = "images/"
 dataset = CustomDataset(excel_file, image_folder, transform=transform)
 
+# Create a DataLoader
+batch_size = 32  # Set your desired batch size
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-def gray_level_averaging(dataset):
-    result = torch.zeros(dataset[0][0].shape)
-    for i in range(len(dataset)):
-        result += dataset[i][0]
+def gray_level_averaging(dataloader):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    total_images = len(dataloader.dataset)
+    processed_images = 0
+    result = None
+    for images, _ in dataloader:
+        images = images.to(device)
+        if result is None:
+            result = torch.zeros(images.shape[1:], device=device)
+        result += torch.sum(images, dim=0)
+        processed_images += batch_size
+        print(f"Batch processed ({processed_images}/{total_images} images)", f"{device} Memory allocated:", torch.cuda.memory_allocated() / 1024 / 1024, "MiB")
     return result / len(dataset)
 
-result = gray_level_averaging(dataset) 
+result = gray_level_averaging(dataloader) 
 torch.save(result, "averaged_gray_level.pt")
 
-result_image = transforms.ToPILImage()(result.squeeze(0))
+result_image = transforms.ToPILImage()(result.squeeze(0).cpu())
 result_image.save("averaged_gray_level.jpg")
 
-plt.imshow(result.squeeze(0), cmap="gray")
+plt.imshow(result.squeeze(0).cpu(), cmap="gray")
 plt.show()
-
